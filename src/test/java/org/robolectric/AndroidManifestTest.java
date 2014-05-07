@@ -18,6 +18,7 @@ import org.robolectric.test.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ import static java.util.Arrays.asList;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.robolectric.util.TestUtil.joinPath;
+import static org.robolectric.util.TestUtil.joinCanonicalPath;
 import static org.robolectric.util.TestUtil.newConfig;
 import static org.robolectric.util.TestUtil.resourceFile;
 
@@ -96,12 +97,11 @@ public class AndroidManifestTest {
     assertEquals("org.robolectric.test.ConfigTestReceiver", config.getReceiverClassName(5));
     assertEquals("org.robolectric.ACTION_DOT_SUBPACKAGE", config.getReceiverIntentFilterActions(5).get(0));
 
-    Map<String, String> meta = config.getReceiverMetaData(5);
+    Map<String, Object> meta = config.getReceiverMetaData(5);
     Object metaValue = meta.get("org.robolectric.metaName1");
     assertEquals("metaValue1", metaValue);
 
     metaValue = meta.get("org.robolectric.metaName2");
-    assertTrue(String.class.isInstance(metaValue));
     assertEquals("metaValue2", metaValue);
 
     metaValue = meta.get("org.robolectric.metaFalse");
@@ -115,6 +115,24 @@ public class AndroidManifestTest {
 
     metaValue = meta.get("org.robolectric.metaFloat");
     assertEquals("1.23", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaColor");
+    assertEquals("#FFFFFF", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaBooleanFromRes");
+    assertEquals("@bool/false_bool_value", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaIntFromRes");
+    assertEquals("@integer/test_integer1", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaColorFromRes");
+    assertEquals("@color/clear", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaStringFromRes");
+    assertEquals("@string/app_name", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaStringOfIntFromRes");
+    assertEquals("@string/str_int", metaValue);
 
     metaValue = meta.get("org.robolectric.metaStringRes");
     assertEquals("@string/app_name", metaValue);
@@ -146,13 +164,12 @@ public class AndroidManifestTest {
   @Test
   @Config(manifest = "src/test/resources/TestAndroidManifestWithAppMetaData.xml")
   public void shouldReturnApplicationMetaData() throws PackageManager.NameNotFoundException {
-    Map<String, String> meta = newConfig("TestAndroidManifestWithAppMetaData.xml").getApplicationMetaData();
+    Map<String, Object> meta = newConfig("TestAndroidManifestWithAppMetaData.xml").getApplicationMetaData();
 
     Object metaValue = meta.get("org.robolectric.metaName1");
     assertEquals("metaValue1", metaValue);
 
     metaValue = meta.get("org.robolectric.metaName2");
-    assertTrue(String.class.isInstance(metaValue));
     assertEquals("metaValue2", metaValue);
 
     metaValue = meta.get("org.robolectric.metaFalse");
@@ -167,20 +184,38 @@ public class AndroidManifestTest {
     metaValue = meta.get("org.robolectric.metaFloat");
     assertEquals("1.23", metaValue);
 
+    metaValue = meta.get("org.robolectric.metaColor");
+    assertEquals("#FFFFFF", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaBooleanFromRes");
+    assertEquals("@bool/false_bool_value", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaIntFromRes");
+    assertEquals("@integer/test_integer1", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaColorFromRes");
+    assertEquals("@color/clear", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaStringFromRes");
+    assertEquals("@string/app_name", metaValue);
+
+    metaValue = meta.get("org.robolectric.metaStringOfIntFromRes");
+    assertEquals("@string/str_int", metaValue);
+
     metaValue = meta.get("org.robolectric.metaStringRes");
     assertEquals("@string/app_name", metaValue);
   }
   
-  @Test public void shouldLoadAllResourcesForExistingLibraries() {
+  @Test public void shouldLoadAllResourcesForExistingLibraries() throws Exception {
     AndroidManifest appManifest = new AndroidManifest(resourceFile("TestAndroidManifest.xml"), resourceFile("res"));
 
     // This intentionally loads from the non standard resources/project.properties
     List<String> resourcePaths = stringify(appManifest.getIncludedResourcePaths());
     assertEquals(asList(
-        joinPath(".", "src", "test", "resources", "res"),
-        joinPath(".", "src", "test", "resources", "lib1", "res"),
-        joinPath(".", "src", "test", "resources", "lib1", "..", "lib3", "res"),
-        joinPath(".", "src", "test", "resources", "lib2", "res")),
+        joinCanonicalPath(".", "src", "test", "resources", "res"),
+        joinCanonicalPath(".", "src", "test", "resources", "lib1", "res"),
+        joinCanonicalPath(".", "src", "test", "resources", "lib3", "res"),
+        joinCanonicalPath(".", "src", "test", "resources", "lib2", "res")),
         resourcePaths);
   }
 
@@ -267,7 +302,7 @@ public class AndroidManifestTest {
     return new AndroidManifest(Fs.newFile(f), null, null);
   }
 
-  private List<String> stringify(List<ResourcePath> resourcePaths) {
+  private List<String> stringify(Collection<ResourcePath> resourcePaths) {
     List<String> resourcePathBases = new ArrayList<String>();
     for (ResourcePath resourcePath : resourcePaths) {
       resourcePathBases.add(resourcePath.resourceBase.toString());

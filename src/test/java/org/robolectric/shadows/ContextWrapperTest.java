@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -155,6 +156,49 @@ public class ContextWrapperTest {
     List<Intent> broadcastIntents = shadowOf(contextWrapper).getBroadcastIntents();
     assertTrue(broadcastIntents.size() == 1);
     assertEquals(broadcastIntent, broadcastIntents.get(0));
+  }
+
+  @Test
+  public void sendStickyBroadcast_shouldDeliverIntentToAllRegisteredReceivers() {
+    BroadcastReceiver receiver = broadcastReceiver("Larry");
+    contextWrapper.registerReceiver(receiver, intentFilter("foo", "baz"));
+
+    contextWrapper.sendStickyBroadcast(new Intent("foo"));
+    transcript.assertEventsSoFar("Larry notified of foo");
+
+    contextWrapper.sendStickyBroadcast(new Intent("womp"));
+    transcript.assertNoEventsSoFar();
+
+    contextWrapper.sendStickyBroadcast(new Intent("baz"));
+    transcript.assertEventsSoFar("Larry notified of baz");
+  }
+
+  @Test
+  public void sendStickyBroadcast_shouldStickSentIntent() {
+    contextWrapper.sendStickyBroadcast(new Intent("foo"));
+    transcript.assertNoEventsSoFar();
+
+    BroadcastReceiver receiver = broadcastReceiver("Larry");
+    Intent sticker = contextWrapper.registerReceiver(receiver, intentFilter("foo", "baz"));
+    transcript.assertEventsSoFar("Larry notified of foo");
+    assertThat(sticker).isNotNull();
+    assertThat(sticker.getAction()).isEqualTo("foo");
+  }
+
+  @Test
+  public void afterSendStickyBroadcast_allSentIntentsShouldBeDeliveredToNewRegistrants() {
+    contextWrapper.sendStickyBroadcast(new Intent("foo"));
+    contextWrapper.sendStickyBroadcast(new Intent("baz"));
+    transcript.assertNoEventsSoFar();
+
+    BroadcastReceiver receiver = broadcastReceiver("Larry");
+    Intent sticker = contextWrapper.registerReceiver(receiver, intentFilter("foo", "baz"));
+    transcript.assertEventsSoFar("Larry notified of foo", "Larry notified of baz");
+    /*
+       Note: we do not strictly test what is returned by the method in this case
+             because there no guaranties what particular Intent will be returned by Android system
+     */
+    assertThat(sticker).isNotNull();
   }
 
   @Test
@@ -314,4 +358,19 @@ public class ContextWrapperTest {
     assertThat(contextWrapper.checkCallingOrSelfPermission("qux")).isEqualTo(PERMISSION_DENIED);
   }
 
+  @Test
+  public void getSharedPreferencesShouldReturnSameInstanceWhenSameNameIsSupplied() {
+    final SharedPreferences pref1 = contextWrapper.getSharedPreferences("pref", Context.MODE_PRIVATE);
+    final SharedPreferences pref2 = contextWrapper.getSharedPreferences("pref", Context.MODE_PRIVATE);
+
+    assertThat(pref1).isSameAs(pref2);
+  }
+
+  @Test
+  public void getSharedPreferencesShouldReturnDifferentInstancesWhenDifferentNameIsSupplied() {
+    final SharedPreferences pref1 = contextWrapper.getSharedPreferences("pref1", Context.MODE_PRIVATE);
+    final SharedPreferences pref2 = contextWrapper.getSharedPreferences("pref2", Context.MODE_PRIVATE);
+
+    assertThat(pref1).isNotSameAs(pref2);
+  }
 }

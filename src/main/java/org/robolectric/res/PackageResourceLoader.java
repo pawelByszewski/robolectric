@@ -1,7 +1,5 @@
 package org.robolectric.res;
 
-import org.robolectric.util.I18nException;
-
 public class PackageResourceLoader extends XResourceLoader {
   private final ResourcePath resourcePath;
 
@@ -17,7 +15,7 @@ public class PackageResourceLoader extends XResourceLoader {
   void doInitialize() {
     try {
       loadEverything();
-    } catch (I18nException e) {
+    } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -39,6 +37,7 @@ public class PackageResourceLoader extends XResourceLoader {
         new ValueResourceLoader(data, "/resources/item", "layout", ResType.LAYOUT),
         new PluralResourceLoader(pluralsData),
         new ValueResourceLoader(data, "/resources/string", "string", ResType.CHAR_SEQUENCE),
+        new ValueResourceLoader(data, "/resources/item[@type='string']", "string", ResType.CHAR_SEQUENCE),
         new ValueResourceLoader(data, "/resources/string-array", "array", ResType.CHAR_SEQUENCE_ARRAY),
         new AttrResourceLoader(data),
         new StyleResourceLoader(data)
