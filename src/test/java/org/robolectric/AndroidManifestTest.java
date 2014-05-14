@@ -162,6 +162,18 @@ public class AndroidManifestTest {
     assertTrue(hasFlag(config.getApplicationFlags(), FLAG_VM_SAFE_MODE));
   }
 
+  @Test
+  public void shouldReturnReadParentActivityIfExists() {
+      AndroidManifest androidManifest = newConfig("TestAndroidManifestForActivities.xml");
+      androidManifest.getApplicationName();
+
+      assertTrue(androidManifest.getActivityData(".shadows.TestActivity2", "org.robolectric").getParentName().
+              equals("org.robolectric.shadows.TestActivity"));
+
+      assertTrue(androidManifest.getActivityData(".shadows.TestActivity3", "org.robolectric").getParentName().
+              equals("org.robolectric.shadows.TestActivity"));
+  }
+
   private boolean hasFlag(final int flags, final int flag) {
     return (flags & flag) != 0;
   }

@@ -10,11 +10,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import android.support.v4.app.NavUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,7 +23,16 @@ import org.robolectric.res.builder.RobolectricPackageManager;
 import org.robolectric.shadows.ShadowDrawable;
 import org.robolectric.test.TemporaryFolder;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.robolectric.util.TestUtil.newConfig;
 
 @RunWith(TestRunners.WithDefaults.class)
 public class RobolectricPackageManagerTest {
@@ -278,6 +283,21 @@ public class RobolectricPackageManagerTest {
     rpm.addManifest(appManifest);
     ApplicationInfo applicationInfo = rpm.getApplicationInfo("org.robolectric", 0);
     assertThat(applicationInfo.metaData.getString("key")).isEqualTo("value");
+  }
+
+  @Test
+  public void shouldReturnActivityInfoWithParentInMetadata() throws PackageManager.NameNotFoundException {
+      AndroidManifest androidManifest = newConfig("TestAndroidManifestForActivities.xml");
+      androidManifest.getApplicationName();
+      rpm.addManifest(androidManifest);
+
+      ComponentName componentName = mock(ComponentName.class);
+      when(componentName.getPackageName()).thenReturn("org.robolectric");
+      when(componentName.getClassName()).thenReturn(".shadows.TestActivity2");
+
+      ActivityInfo activityInfo = rpm.getActivityInfo(componentName, 3);
+      assertThat(activityInfo.metaData.getString(NavUtils.PARENT_ACTIVITY))
+              .isEqualTo("org.robolectric.shadows.TestActivity");
   }
 
   /////////////////////////////

@@ -6,6 +6,11 @@
     <application>
         <activity android:name="org.robolectric.shadows.TestActivity"/>
 
-        <activity android:name=".shadows.TestActivity2"/>
+        <activity android:name=".shadows.TestActivity2"
+                  android:parentActivityName="org.robolectric.shadows.TestActivity"/>
+
+        <activity android:name="org.robolectric.shadows.TestActivity3"
+                  android:parentActivityName="org.robolectric.shadows.TestActivity"/>
+
     </application>
 </manifest>

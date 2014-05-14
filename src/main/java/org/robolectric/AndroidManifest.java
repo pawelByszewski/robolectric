@@ -96,7 +96,7 @@ public class AndroidManifest {
   }
 
   public String getThemeRef(Class<? extends Activity> activityClass) {
-    ActivityData activityData = getActivityData(activityClass.getName());
+    ActivityData activityData = getActivityData(activityClass.getName(), packageName);
     String themeRef = activityData != null ? activityData.getThemeRef() : null;
     if (themeRef == null) {
       themeRef = getThemeRef();
@@ -151,7 +151,7 @@ public class AndroidManifest {
 
       parseApplicationFlags(manifestDocument);
       parseReceivers(manifestDocument);
-      parseActivities(manifestDocument);
+      parseActivities(manifestDocument, packageName);
       parseApplicationMetaData(manifestDocument);
     } catch (Exception ignored) {
       ignored.printStackTrace();
@@ -181,7 +181,7 @@ public class AndroidManifest {
     }
   }
 
-  private void parseActivities(final Document manifestDocument) {
+  private void parseActivities(final Document manifestDocument, String packageName) {
     Node application = manifestDocument.getElementsByTagName("application").item(0);
     if (application == null) return;
 
@@ -189,11 +189,14 @@ public class AndroidManifest {
       NamedNodeMap attributes = activityNode.getAttributes();
       Node nameAttr = attributes.getNamedItem("android:name");
       Node themeAttr = attributes.getNamedItem("android:theme");
+      Node parentAttr = attributes.getNamedItem("android:parentActivityName");
       if (nameAttr == null) continue;
       String activityName = nameAttr.getNodeValue();
+      activityName = activityName.startsWith(packageName) ? activityName : packageName + activityName ;
       activityDatas.put(activityName,
           new ActivityData(activityName,
-              themeAttr == null ? null : resolveClassRef(themeAttr.getNodeValue())
+              themeAttr == null ? null : resolveClassRef(themeAttr.getNodeValue()),
+              parentAttr == null ? null : resolveClassRef(parentAttr.getNodeValue())
           ));
     }
   }
@@ -448,8 +451,12 @@ public class AndroidManifest {
     return result;
   }
 
-  public ActivityData getActivityData(String activityClassName) {
-    return activityDatas.get(activityClassName);
+  public ActivityData getActivityData(String activityClassName, String packageName) {
+    ActivityData activityData = activityDatas.get(activityClassName);
+    if(activityData == null) {
+        activityData = activityDatas.get(packageName + activityClassName);
+    }
+    return activityData;
   }
 
   public String getThemeRef() {

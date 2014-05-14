@@ -9,7 +9,16 @@ import android.content.pm.PackageInfo;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.util.Pair;
+import org.robolectric.AndroidManifest;
+import org.robolectric.Robolectric;
+import org.robolectric.res.ActivityData;
+import org.robolectric.res.ResName;
+import org.robolectric.res.ResourceIndex;
+import org.robolectric.shadows.ShadowContext;
+import org.robolectric.tester.android.content.pm.StubPackageManager;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,13 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.robolectric.AndroidManifest;
-import org.robolectric.Robolectric;
-import org.robolectric.res.ActivityData;
-import org.robolectric.res.ResName;
-import org.robolectric.res.ResourceIndex;
-import org.robolectric.shadows.ShadowContext;
-import org.robolectric.tester.android.content.pm.StubPackageManager;
 
 public class RobolectricPackageManager extends StubPackageManager {
 
@@ -61,11 +63,16 @@ public class RobolectricPackageManager extends StubPackageManager {
     String packageName = className.getPackageName();
     AndroidManifest androidManifest = androidManifests.get(packageName);
     String activityName = className.getClassName();
-    ActivityData activityData = androidManifest.getActivityData(activityName);
+    ActivityData activityData = androidManifest.getActivityData(activityName, packageName);
     ActivityInfo activityInfo = new ActivityInfo();
     activityInfo.packageName = packageName;
     activityInfo.name = activityName;
-    if (activityData != null) {
+    if(activityData != null) {
+        Bundle bundle = new Bundle();
+        bundle.putString(NavUtils.PARENT_ACTIVITY, activityData.getParentName());
+        activityInfo.metaData = bundle;
+    }
+    if (activityData != null && activityData.getThemeRef() != null) {
       ResourceIndex resourceIndex = Robolectric.getShadowApplication().getResourceLoader().getResourceIndex();
       activityInfo.theme = resourceIndex.getResourceId(new ResName(activityData.getThemeRef()));
     }

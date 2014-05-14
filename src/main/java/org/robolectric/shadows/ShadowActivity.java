@@ -682,6 +682,12 @@ public class ShadowActivity extends ShadowContextThemeWrapper {
     return streamType;
   }
 
+  @Implementation
+  public boolean navigateUpTo(Intent upIntent) {
+      startActivity(upIntent);
+      return true;
+  }
+
   private final class ActivityInvoker {
     private Method method;
 
