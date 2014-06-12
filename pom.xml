@@ -9,7 +9,7 @@
         <version>7</version>
     </parent>
 
-    <groupId>org.robolectric</groupId>
+    <groupId>eu.softisland</groupId>
     <artifactId>robolectric</artifactId>
     <version>2.2.1_allegro_snapshot</version>
     <packaging>jar</packaging>
