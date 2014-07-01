@@ -74,7 +74,7 @@ public class RobolectricPackageManager extends StubPackageManager {
     }
     if (activityData != null && activityData.getThemeRef() != null) {
       ResourceIndex resourceIndex = Robolectric.getShadowApplication().getResourceLoader().getResourceIndex();
-      activityInfo.theme = resourceIndex.getResourceId(new ResName(activityData.getThemeRef()));
+      activityInfo.theme = resourceIndex.getResourceId(new ResName(packageName, activityData.getThemeRef()));
     }
     activityInfo.applicationInfo = getApplicationInfo(packageName, flags);
     return activityInfo;
