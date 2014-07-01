@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 public class ResName {
   private static final Pattern FQN_PATTERN = Pattern.compile("^([^:]*):([^/]+)/(.+)$");
+  private static final Pattern NFQN_PATTERN = Pattern.compile("^@([^/]+)/(.+)$");
   private static final int NAMESPACE = 1;
   private static final int TYPE = 2;
   private static final int NAME = 3;
@@ -21,18 +22,31 @@ public class ResName {
     this.name = name.indexOf('.') != -1 ? name.replace('.', '_') : name;
   }
 
-  public ResName(@NotNull String fullyQualifiedName) {
-    Matcher matcher = FQN_PATTERN.matcher(fullyQualifiedName);
-    if (!matcher.find()) {
-      throw new IllegalStateException("\"" + fullyQualifiedName + "\" is not fully qualified");
-    }
-    packageName = matcher.group(NAMESPACE);
-    type = matcher.group(TYPE);
-    String nameStr = matcher.group(NAME);
-    name = nameStr.indexOf('.') != -1 ? nameStr.replace('.', '_') : nameStr;
+    public ResName(@NotNull String fullyQualifiedName) {
+        Matcher matcher = FQN_PATTERN.matcher(fullyQualifiedName);
+        if (!matcher.find()) {
+            throw new IllegalStateException("\"" + fullyQualifiedName + "\" is not fully qualified");
+        }
+        packageName = matcher.group(NAMESPACE);
+        type = matcher.group(TYPE);
+        String nameStr = matcher.group(NAME);
+        name = nameStr.indexOf('.') != -1 ? nameStr.replace('.', '_') : nameStr;
 
-    if (packageName.equals("xmlns")) throw new IllegalStateException("\"" + fullyQualifiedName + "\" unexpected");
-  }
+        if (packageName.equals("xmlns")) throw new IllegalStateException("\"" + fullyQualifiedName + "\" unexpected");
+    }
+
+    public ResName(@NotNull String packageName, @NotNull String fullyQualifiedName) {
+        Matcher matcher = NFQN_PATTERN.matcher(fullyQualifiedName);
+        if (!matcher.find()) {
+            throw new IllegalStateException("\"" + fullyQualifiedName + "\" is not qualified");
+        }
+        this.packageName = packageName;
+        type = matcher.group(1);
+        String nameStr = matcher.group(2);
+        name = nameStr.indexOf('.') != -1 ? nameStr.replace('.', '_') : nameStr;
+
+        if (packageName.equals("xmlns")) throw new IllegalStateException("\"" + fullyQualifiedName + "\" unexpected");
+    }
 
   public static @NotNull String qualifyResourceName(@NotNull String possiblyQualifiedResourceName, String defaultPackageName, String defaultType) {
     ResName resName = qualifyResName(possiblyQualifiedResourceName, defaultPackageName, defaultType);
